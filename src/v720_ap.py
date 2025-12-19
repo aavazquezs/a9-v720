@@ -24,8 +24,17 @@ class v720_ap:
 
     def _rcv_video_frame(self, on_pkg_recv: callable) -> None:
         heartbeat_cnt = 0
+        import time
+        last_heartbeat = time.time()
+        heartbeat_interval = 5
         while True:
             try:
+                current_time = time.time()
+                if current_time - last_heartbeat > heartbeat_interval:
+                    self.ping()
+                    last_heartbeat = current_time
+                    heartbeat_cnt = 0
+
                 _bf = self._rcv()
                 if _bf is not None and len(_bf) > 0:
                     pkg = prot_udp.resp(_bf)
@@ -43,7 +52,7 @@ class v720_ap:
             except IOError:
                 # print('--- skip heartbit ')
                 heartbeat_cnt += 1
-                if heartbeat_cnt > 1:
+                if heartbeat_cnt > 5:
                     break
 
     def _json_req(self, prot: dict, deal_flag = 0, fwd_id = prot_json_udp.DEFAULT_FORWARD_ID) -> prot_json_udp:
@@ -105,7 +114,7 @@ class v720_ap:
         })
 
     def ping(self) -> bool:
-        self._socket.sendall(prot_udp(cmd=cmd_udp.P2P_UDP_CMD_HEARTBEAT).req())
+        self._socket.send(prot_udp(cmd=cmd_udp.P2P_UDP_CMD_HEARTBEAT).req())
         return len(self._socket.recv()) > 0
 
     def flip(self, val: bool):
@@ -147,7 +156,7 @@ class v720_ap:
             'setApPwd': pwd
         })
 
-    def set_wifi(self, name, pwd):
+    def set_wifi(self, name: str, pwd):
         return self._ap_req({
             'code': cmd_udp.CODE_FORWARD_DEV_SET_WIFI,
             'devTarget': prot_json_udp.DEFAULT_DEV_TARGET,
