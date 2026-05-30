@@ -5,3 +5,4 @@
 *.mjpg
 *.pcap
 nohup.out
+.venv/
