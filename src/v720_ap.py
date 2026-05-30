@@ -142,6 +142,35 @@ class v720_ap:
         })
 
 
+    def set_motor_state(self, direction: int, field: str = 'motorState', use_ap_req: bool = True):
+        if use_ap_req:
+            target = self.dev_id or prot_json_udp.DEFAULT_DEV_TARGET
+            return self._ap_req({
+                'code': cmd_udp.CODE_FORWARD_DEV_MOTOR_STATE,
+                'devTarget': target,
+                field: direction
+            })
+        else:
+            return self._json_req({
+                'code': cmd_udp.CODE_FORWARD_DEV_MOTOR_STATE,
+                field: direction
+            })
+
+    def set_motor_state_async(self, direction: int, field: str = 'motorState', use_ap_req: bool = True):
+        if use_ap_req:
+            target = self.dev_id or prot_json_udp.DEFAULT_DEV_TARGET
+            data = prot_ap(content={
+                'code': cmd_udp.CODE_FORWARD_DEV_MOTOR_STATE,
+                'devTarget': target,
+                field: direction
+            }).req()
+        else:
+            data = prot_json_udp(json={
+                'code': cmd_udp.CODE_FORWARD_DEV_MOTOR_STATE,
+                field: direction
+            }).req()
+        self._socket.send(data)
+
     def ir_led(self, ena: bool):
         return self._ap_req({
             'code': cmd_udp.CODE_FORWARD_DEV_IR_LED,

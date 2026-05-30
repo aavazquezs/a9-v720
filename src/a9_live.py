@@ -75,8 +75,14 @@ def show_live(cam: v720_ap, videofile: str = None, audiofile: str = None):
                 if not sync:
                     f = data.find(b'\xff\xd8')
                     if f != -1:
-                        frame.extend(data[f:])
-                        sync = True
+                        g = data.find(b'\xff\xd9', f)
+                        if g != -1:
+                            frame[:] = data[f:g + 2]
+                            cv2_show_img(frame)
+                            frame.clear()
+                        else:
+                            frame[:] = data[f:]
+                            sync = True
                 else:  # sync == true
                     f = data.find(b'\xff\xd9')
                     if f != -1:
@@ -85,7 +91,11 @@ def show_live(cam: v720_ap, videofile: str = None, audiofile: str = None):
                         frame.clear()
                         sync = False
                     else:
-                        frame.extend(data)
+                        sofi = data.find(b'\xff\xd8')
+                        if sofi != -1:
+                            frame[:] = data[sofi:]
+                        else:
+                            frame.extend(data)
             elif cmd == cmd_udp.P2P_UDP_CMD_G711 and _audio is not None:
                 _audio.write(data)
         cam.cap_live(on_rcv)
